@@ -66,37 +66,12 @@ Variable hf: helper_functions.
 Definition makelong (h l: expr): expr :=
   Eop Omakelong (h ::: l ::: Enil).
 
-(** Original definition:
-<<
 Nondetfunction splitlong (e: expr) (f: expr -> expr -> expr) :=
   match e with
   | Eop Omakelong (h ::: l ::: Enil) => f h l
   | _ => Elet e (f (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil)))
   end.
->>
-*)
 
-Inductive splitlong_cases: forall (e: expr) , Type :=
-  | splitlong_case1: forall h l, splitlong_cases (Eop Omakelong (h ::: l ::: Enil))
-  | splitlong_default: forall (e: expr) , splitlong_cases e.
-
-Definition splitlong_match (e: expr)  :=
-  match e as zz1 return splitlong_cases zz1 with
-  | Eop Omakelong (h ::: l ::: Enil) => splitlong_case1 h l
-  | e => splitlong_default e
-  end.
-
-Definition splitlong (e: expr) (f: expr -> expr -> expr) :=
-  match splitlong_match e with
-  | splitlong_case1 h l => (* Eop Omakelong (h ::: l ::: Enil) *) 
-      f h l
-  | splitlong_default e =>
-      Elet e (f (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil)))
-  end.
-
-
-(** Original definition:
-<<
 Nondetfunction splitlong2 (e1 e2: expr) (f: expr -> expr -> expr -> expr -> expr) :=
   match e1, e2 with
   | Eop Omakelong (h1 ::: l1 ::: Enil), Eop Omakelong (h2 ::: l2 ::: Enil) =>
@@ -112,100 +87,23 @@ Nondetfunction splitlong2 (e1 e2: expr) (f: expr -> expr -> expr -> expr -> expr
         (f (Eop Ohighlong (Eletvar 1 ::: Enil)) (Eop Olowlong (Eletvar 1 ::: Enil))
            (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil))))
   end.
->>
-*)
 
-Inductive splitlong2_cases: forall (e1 e2: expr) , Type :=
-  | splitlong2_case1: forall h1 l1 h2 l2, splitlong2_cases (Eop Omakelong (h1 ::: l1 ::: Enil)) (Eop Omakelong (h2 ::: l2 ::: Enil))
-  | splitlong2_case2: forall h1 l1 t2, splitlong2_cases (Eop Omakelong (h1 ::: l1 ::: Enil)) (t2)
-  | splitlong2_case3: forall t1 h2 l2, splitlong2_cases (t1) (Eop Omakelong (h2 ::: l2 ::: Enil))
-  | splitlong2_default: forall (e1 e2: expr) , splitlong2_cases e1 e2.
-
-Definition splitlong2_match (e1 e2: expr)  :=
-  match e1 as zz1, e2 as zz2 return splitlong2_cases zz1 zz2 with
-  | Eop Omakelong (h1 ::: l1 ::: Enil), Eop Omakelong (h2 ::: l2 ::: Enil) => splitlong2_case1 h1 l1 h2 l2
-  | Eop Omakelong (h1 ::: l1 ::: Enil), t2 => splitlong2_case2 h1 l1 t2
-  | t1, Eop Omakelong (h2 ::: l2 ::: Enil) => splitlong2_case3 t1 h2 l2
-  | e1, e2 => splitlong2_default e1 e2
-  end.
-
-Definition splitlong2 (e1 e2: expr) (f: expr -> expr -> expr -> expr -> expr) :=
-  match splitlong2_match e1 e2 with
-  | splitlong2_case1 h1 l1 h2 l2 => (* Eop Omakelong (h1 ::: l1 ::: Enil), Eop Omakelong (h2 ::: l2 ::: Enil) *) 
-      f h1 l1 h2 l2
-  | splitlong2_case2 h1 l1 t2 => (* Eop Omakelong (h1 ::: l1 ::: Enil), t2 *) 
-      Elet t2 (f (lift h1) (lift l1) (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil)))
-  | splitlong2_case3 t1 h2 l2 => (* t1, Eop Omakelong (h2 ::: l2 ::: Enil) *) 
-      Elet t1 (f (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil)) (lift h2) (lift l2))
-  | splitlong2_default e1 e2 =>
-      Elet e1 (Elet (lift e2) (f (Eop Ohighlong (Eletvar 1 ::: Enil)) (Eop Olowlong (Eletvar 1 ::: Enil)) (Eop Ohighlong (Eletvar O ::: Enil)) (Eop Olowlong (Eletvar O ::: Enil))))
-  end.
-
-
-(** Original definition:
-<<
 Nondetfunction lowlong (e: expr) :=
   match e with
   | Eop Omakelong (e1 ::: e2 ::: Enil) => e2
   | _ => Eop Olowlong (e ::: Enil)
   end.
->>
-*)
 
-Inductive lowlong_cases: forall (e: expr), Type :=
-  | lowlong_case1: forall e1 e2, lowlong_cases (Eop Omakelong (e1 ::: e2 ::: Enil))
-  | lowlong_default: forall (e: expr), lowlong_cases e.
-
-Definition lowlong_match (e: expr) :=
-  match e as zz1 return lowlong_cases zz1 with
-  | Eop Omakelong (e1 ::: e2 ::: Enil) => lowlong_case1 e1 e2
-  | e => lowlong_default e
-  end.
-
-Definition lowlong (e: expr) :=
-  match lowlong_match e with
-  | lowlong_case1 e1 e2 => (* Eop Omakelong (e1 ::: e2 ::: Enil) *) 
-      e2
-  | lowlong_default e =>
-      Eop Olowlong (e ::: Enil)
-  end.
-
-
-(** Original definition:
-<<
 Nondetfunction highlong (e: expr) :=
   match e with
   | Eop Omakelong (e1 ::: e2 ::: Enil) => e1
   | _ => Eop Ohighlong (e ::: Enil)
   end.
->>
-*)
-
-Inductive highlong_cases: forall (e: expr), Type :=
-  | highlong_case1: forall e1 e2, highlong_cases (Eop Omakelong (e1 ::: e2 ::: Enil))
-  | highlong_default: forall (e: expr), highlong_cases e.
-
-Definition highlong_match (e: expr) :=
-  match e as zz1 return highlong_cases zz1 with
-  | Eop Omakelong (e1 ::: e2 ::: Enil) => highlong_case1 e1 e2
-  | e => highlong_default e
-  end.
-
-Definition highlong (e: expr) :=
-  match highlong_match e with
-  | highlong_case1 e1 e2 => (* Eop Omakelong (e1 ::: e2 ::: Enil) *) 
-      e1
-  | highlong_default e =>
-      Eop Ohighlong (e ::: Enil)
-  end.
-
 
 Definition longconst (n: int64) : expr :=
   makelong (Eop (Ointconst (Int64.hiword n)) Enil)
            (Eop (Ointconst (Int64.loword n)) Enil).
 
-(** Original definition:
-<<
 Nondetfunction is_longconst (e: expr) :=
   match e with
   | Eop Omakelong (Eop (Ointconst h) Enil ::: Eop (Ointconst l) Enil ::: Enil) =>
@@ -213,27 +111,6 @@ Nondetfunction is_longconst (e: expr) :=
   | _ =>
       None
   end.
->>
-*)
-
-Inductive is_longconst_cases: forall (e: expr), Type :=
-  | is_longconst_case1: forall h l, is_longconst_cases (Eop Omakelong (Eop (Ointconst h) Enil ::: Eop (Ointconst l) Enil ::: Enil))
-  | is_longconst_default: forall (e: expr), is_longconst_cases e.
-
-Definition is_longconst_match (e: expr) :=
-  match e as zz1 return is_longconst_cases zz1 with
-  | Eop Omakelong (Eop (Ointconst h) Enil ::: Eop (Ointconst l) Enil ::: Enil) => is_longconst_case1 h l
-  | e => is_longconst_default e
-  end.
-
-Definition is_longconst (e: expr) :=
-  match is_longconst_match e with
-  | is_longconst_case1 h l => (* Eop Omakelong (Eop (Ointconst h) Enil ::: Eop (Ointconst l) Enil ::: Enil) *) 
-      Some(Int64.ofwords h l)
-  | is_longconst_default e =>
-      None
-  end.
-
 
 Definition is_longconst_zero (e: expr) :=
   match is_longconst e with
@@ -281,34 +158,11 @@ Definition intuoffloat (arg:expr) :=
 
 Definition intuofsingle (e: expr) := intuoffloat (floatofsingle e).
 
-(** Original definition:
-<<
 Nondetfunction singleofintu (e: expr) :=
   match e with
   | Eop (Ointconst n) Enil => Eop (Osingleconst (Float32.of_intu n)) Enil
   | _ => singleoffloat (floatofintu e)
   end.
->>
-*)
-
-Inductive singleofintu_cases: forall (e: expr), Type :=
-  | singleofintu_case1: forall n, singleofintu_cases (Eop (Ointconst n) Enil)
-  | singleofintu_default: forall (e: expr), singleofintu_cases e.
-
-Definition singleofintu_match (e: expr) :=
-  match e as zz1 return singleofintu_cases zz1 with
-  | Eop (Ointconst n) Enil => singleofintu_case1 n
-  | e => singleofintu_default e
-  end.
-
-Definition singleofintu (e: expr) :=
-  match singleofintu_match e with
-  | singleofintu_case1 n => (* Eop (Ointconst n) Enil *) 
-      Eop (Osingleconst (Float32.of_intu n)) Enil
-  | singleofintu_default e =>
-      singleoffloat (floatofintu e)
-  end.
-
 
 
 Definition andl (e1 e2: expr) :=

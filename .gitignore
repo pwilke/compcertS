@@ -5,3 +5,10 @@
 *.mli
 _build/
 ccomp
+backend/SelectDiv.v
+backend/SelectLong.v
+ia32/SelectOp.v
+ia32/ConstpropOp.v
+driver/Configuration.ml
+*.cmi
+*.cmx
