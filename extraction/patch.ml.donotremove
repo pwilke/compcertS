@@ -1,0 +1,52 @@
+let debug = ref false
+
+let print_memval v =
+  match v with
+  | Symbolic (e,t,n) -> Printf.sprintf "Symbolic (%s,%d)>" (PrintValues.print_expr_symb e) (Camlcoq.Nat.to_int n)
+
+let print_mem_contents m b =
+  let mvl = PTree.elements (snd (PMap.get b m.mem_contents)) in
+  let mvl = List.map (fun (p,y) ->
+    (match p with
+      BinNums.Coq_xH -> Z0
+     | Coq_xO (pp) -> Zpos pp 
+     | Coq_xI (pp) -> Zneg pp ), y) mvl in
+  let mvl_sorted = List.sort (fun (i1,m1) (i2,m2) -> (Camlcoq.Z.to_int i1) - (Camlcoq.Z.to_int i2)) mvl in
+  let block_content = List.map
+    (function (i,mv) -> Printf.sprintf "%d -> %s\n" (Camlcoq.Z.to_int i) (print_memval mv)) mvl_sorted in
+  List.fold_left ( ^ ) "" block_content
+
+
+ let load chunk m b ofs = 
+   let res = load chunk m b ofs in
+   if !debug then begin
+     Printf.printf "*** load %s %s -> %s \n"
+       (PrintAST.name_of_chunk chunk)
+       (PrintValues.print_value (Vptr (b,ofs)) Ctypes.Tvoid)
+       (PrintValues.print_opt_value_symb res); Printf.printf "%s" (print_mem_contents m b) end;
+   res 
+
+
+  let loadv chunk m addr =
+    let v = mem_norm m addr in
+    (match v with
+    | Vptr (b, ofs) -> load chunk m b (Int.unsigned ofs)
+    | _ -> None)
+
+
+
+  let store chunk m b ofs v = 
+    if !debug then begin 
+      Printf.printf "*** store %s %s %s\n"
+        (PrintAST.name_of_chunk chunk)
+	(PrintValues.print_value (Vptr (b,ofs)) Ctypes.Tvoid)
+	(PrintValues.print_opt_value_symb (Some v)) end;
+    store chunk m b ofs v
+
+  let storev chunk m addr v =
+    match mem_norm m addr with
+    | Vptr (b, ofs) -> store chunk m b (Int.unsigned ofs) v
+    | _ -> None
+      
+end
+(*patched*)

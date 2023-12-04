@@ -1,0 +1,4 @@
+val debug : bool ref
+
+end
+(*patched*)

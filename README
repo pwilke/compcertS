@@ -1,0 +1,51 @@
+------------------------------
+Introduction
+------------------------------
+This is an implementation of the compiler CompCertS which applies the principles of Software Fault Isolation.
+
+
+------------------------------
+Executable
+------------------------------
+"sficomp" is the executable created by our implementation.
+It allows the same options as "ccomp"
+
+------------------------------
+Requirement
+------------------------------
+Coq 8.4pl6
+Menhir
+Ocaml
+ppsimpl
+
+
+------------------------------
+Installation
+------------------------------
+#More information on http://compcert.inria.fr/man/manual002.html
+#From the root directory of the project
+./configure 		         #choose the target
+./configure ia32-linux   #as an example
+make all
+make install
+
+
+------------------------------
+Getting the bench
+------------------------------
+#From the root directory of the project
+cd test/bench
+./get_perf.sh
+
+
+------------------------------
+Draw graph of performance
+------------------------------
+#From the root directory of the project
+cd test/bench
+gnuplot
+load "percentage.p"     #To get the graph with percentage speed
+load "time.p"           #To get absolute time comparison graph
+
+
+
